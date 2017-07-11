@@ -1,38 +1,44 @@
 package pcapng
 
 import (
-	"bytes"
-	"encoding/binary"
+	"bufio"
 	"io"
+	"os"
+
+	"github.com/ryankurte/go-pcapng/types"
 )
 
-func writeSectionHeader(w io.Writer, options []Block) error {
-	sectionBuff := bytes.NewBuffer(nil)
-	sectionHeader := SectionHeaderBlock{
-		Magic:         Magic,
-		VersionMajor:  MajorVersion,
-		VersionMinor:  MinorVersion,
-		SectionLength: SectionLengthDefault,
-		//Options:       options,
+// FileWriter is a PCAP-NG file writer
+type FileWriter struct {
+	f *os.File
+	w io.Writer
+}
+
+// NewFileWriter creates a new PCAP-NG file writing instanew
+func NewFileWriter(fileName string) (*FileWriter, error) {
+	// Open capture file
+	f, err := os.OpenFile(fileName, os.O_CREATE|os.O_RDWR|os.O_TRUNC, 0666)
+	if err != nil {
+		return nil, err
 	}
-	err := binary.Write(sectionBuff, binary.LittleEndian, sectionHeader)
+	w := bufio.NewWriter(f)
+
+	// Write section header
+
+	return &FileWriter{f: f, w: w}, nil
+}
+
+func writeSectionHeaderBlock(w io.Writer, options types.Options) error {
+	sh := types.NewSectionHeader(options)
+	shd, err := sh.MarshalBinary()
 	if err != nil {
 		return err
 	}
-
-	return writeBlock(w, BlockTypeSectionHeader, sectionBuff.Bytes())
-}
-
-func writeBlock(w io.Writer, blockType uint32, data []byte) error {
-	length := uint32(len(data)) + 12
-	if err := binary.Write(w, binary.LittleEndian, &BlockHeader{Type: blockType, Length: length}); err != nil {
+	b := types.NewBlock(types.BlockTypeSectionHeader, shd)
+	bd, err := b.MarshalBinary()
+	if err != nil {
 		return err
 	}
-	if _, err := w.Write(data); err != nil {
-		return err
-	}
-	if err := binary.Write(w, binary.LittleEndian, &BlockTrailer{Length: length}); err != nil {
-		return err
-	}
+	w.Write(bd)
 	return nil
 }

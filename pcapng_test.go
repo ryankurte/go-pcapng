@@ -4,19 +4,19 @@ import (
 	"bytes"
 	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/ryankurte/go-pcapng/types"
 )
 
 func TestPCAPNG(t *testing.T) {
 
 	t.Run("Encodes and decodes blocks", func(t *testing.T) {
-		buff := bytes.NewBuffer(nil)
-
-		b1 := NewBlock(uint32(1337), []byte{0xaa, 0xbb, 0xcc, 0xdd, 0xee})
-		err := b1.MarshalBinary(buff)
+		b1 := types.NewBlock(uint32(1337), []byte{0xaa, 0xbb, 0xcc, 0xdd, 0xee})
+		data, err := b1.MarshalBinary()
 		assert.Nil(t, err)
 
-		b2 := &Block{}
-		err = b2.UnmarshalBinary(buff)
+		b2 := &types.Block{}
+		err = b2.UnmarshalBinary(data)
 		assert.Nil(t, err)
 
 		assert.EqualValues(t, b1, b2)
@@ -25,7 +25,7 @@ func TestPCAPNG(t *testing.T) {
 	t.Run("Encodes section header blocks", func(t *testing.T) {
 		b := bytes.NewBuffer(nil)
 
-		err := writeSectionHeader(b, nil)
+		err := writeSectionHeaderBlock(b, nil)
 		assert.Nil(t, err)
 
 		expected := []byte{
