@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"net"
+	"strings"
 )
 
 const (
@@ -44,16 +45,41 @@ type InterfaceDescription struct {
 	Options Options
 }
 
+type InterfaceAddress struct {
+	net.IP
+	net.IPMask
+}
+
 // InterfaceOptions options that can be set for an interface
 type InterfaceOptions struct {
 	Name        string
 	Description string
-	IPs         []struct {
-		net.IP
-		net.IPMask
+	IPs         []net.IPNet
+	MAC         net.HardwareAddr
+	EUI         net.HardwareAddr
+	Speed       uint64
+}
+
+func bytesToHexString(data []byte) string {
+	str := ""
+	for i, d := range data {
+		str += fmt.Sprintf("%.2x", d)
+		if i != len(data)-1 {
+			str += " "
+		}
 	}
-	MAC net.HardwareAddr
-	EUI net.HardwareAddr
+	return str
+}
+
+func bytesToByteString(data []byte) string {
+	str := ""
+	for i, d := range data {
+		str += fmt.Sprintf("%d", d)
+		if i != len(data)-1 {
+			str += " "
+		}
+	}
+	return str
 }
 
 // NewInterfaceDescription creates an interface description with the provided options
@@ -65,33 +91,32 @@ func NewInterfaceDescription(linkType uint16, options InterfaceOptions) (*Interf
 	}
 
 	if options.Description != "" {
-		opts = append(opts, *NewOption(OptionCodeInterfaceName, []byte(options.Description)))
+		opts = append(opts, *NewOption(OptionCodeInterfaceDescription, []byte(options.Description)))
 	}
 
 	if options.MAC.String() != "" {
-		opts = append(opts, *NewOption(OptionCodeInterfaceMACAddr, []byte(options.MAC.String())))
+		opts = append(opts, *NewOption(OptionCodeInterfaceMACAddr, []byte(strings.Replace(options.MAC.String(), ":", " ", -1))))
 	}
 
 	if options.EUI.String() != "" {
-		opts = append(opts, *NewOption(OptionCodeInterfaceEUIAddr, []byte(options.EUI.String())))
+		opts = append(opts, *NewOption(OptionCodeInterfaceEUIAddr, []byte(strings.Replace(options.EUI.String(), ":", " ", -1))))
 	}
 
 	for _, ip := range options.IPs {
-		str := ""
-		for i := range ip.IP {
-			str += fmt.Sprintf("%d ", ip.IP[i])
-		}
-		for i := range ip.IPMask {
-			str += fmt.Sprintf("%d ", ip.IPMask[i])
-		}
-
-		if len(ip.IP) == 4 {
+		if i := ip.IP.To4(); i != nil {
+			str := bytesToByteString(append(i, ip.Mask...))
 			opts = append(opts, *NewOption(OptionCodeInterfaceV4Addr, []byte(str)))
-		} else if len(ip.IP) == 16 {
+		} else if i := ip.IP.To16(); i != nil {
+			mask, _ := ip.Mask.Size()
+			str := bytesToHexString(append(i, byte(mask)))
 			opts = append(opts, *NewOption(OptionCodeInterfaceV6Addr, []byte(str)))
 		} else {
 			return nil, fmt.Errorf("Malformed IP address: %+v", ip)
 		}
+	}
+
+	if options.Speed != 0 {
+		opts = append(opts, *NewOption(OptionCodeInterfaceSpeed, []byte(fmt.Sprintf("%d", options.Speed))))
 	}
 
 	return &InterfaceDescription{

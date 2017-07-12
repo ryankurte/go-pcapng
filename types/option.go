@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 )
 
 const (
@@ -27,6 +28,10 @@ type Option struct {
 // NewOption creates a new option instance
 func NewOption(code uint16, data []byte) *Option {
 	return &Option{OptionHeader: OptionHeader{Code: code, Length: uint16(len(data))}, Value: data}
+}
+
+func (o *Option) String() string {
+	return fmt.Sprintf("Option code: %d length: %d data: '%s'", o.Code, o.Length, string(o.Value))
 }
 
 // NewCommentOption creates a new comment option instance
