@@ -97,4 +97,22 @@ func TestPCAPNG(t *testing.T) {
 		assert.EqualValues(t, expected, b.Bytes())
 	})
 
+	t.Run("Creates valid pcap files", func(t *testing.T) {
+		pw, err := NewFileWriter("./test.pcapng")
+		assert.Nil(t, err)
+
+		so := types.SectionHeaderOptions{
+			Comment:     "Test go-pcapng output file",
+			Application: "go-pcapng",
+		}
+		pw.WriteSectionHeader(so)
+
+		io := types.InterfaceOptions{
+			Name:        "Test interface",
+			Description: "Totally fake",
+		}
+		pw.WriteInterfaceDescription(types.LinkTypePrivate, io)
+
+	})
+
 }

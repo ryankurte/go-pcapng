@@ -1,5 +1,6 @@
 package types
 
+// PCAP File constants
 const (
 	Magic                uint32 = 0x1A2B3C4D
 	MajorVersion         uint16 = 1
@@ -8,5 +9,8 @@ const (
 )
 
 const (
-	BlockTypeSectionHeader uint32 = 0x0A0D0D0A
+	// LinkTypeIEEE802_15_4 IEEE802.15.4 link type
+	LinkTypeIEEE802_15_4 uint16 = 195
+	// LinkTypePrivate Private link type
+	LinkTypePrivate uint16 = 147
 )

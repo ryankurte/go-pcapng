@@ -5,6 +5,11 @@ import (
 	"encoding/binary"
 )
 
+const (
+	// BlockTypeSectionHeader section header block type
+	BlockTypeSectionHeader uint32 = 0x0A0D0D0A
+)
+
 // SectionHeader option codes
 const (
 	OptionCodeSectionHeaderHardware    uint16 = 2
