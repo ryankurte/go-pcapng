@@ -2,11 +2,22 @@ package pcapng
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 
+	"github.com/stretchr/testify/assert"
+
+	"encoding/binary"
 	"github.com/ryankurte/go-pcapng/types"
 )
+
+func timeToSplitArr(now time.Time) []byte {
+	buf := bytes.NewBuffer(nil)
+	micros := now.UnixNano() / 1e3
+	binary.Write(buf, binary.LittleEndian, uint32(micros>>32))
+	binary.Write(buf, binary.LittleEndian, uint32(micros))
+	return buf.Bytes()
+}
 
 func TestPCAPNG(t *testing.T) {
 
@@ -25,7 +36,8 @@ func TestPCAPNG(t *testing.T) {
 	t.Run("Encodes section header blocks", func(t *testing.T) {
 		b := bytes.NewBuffer(nil)
 
-		err := writeSectionHeaderBlock(b, nil)
+		opts := types.SectionHeaderOptions{}
+		err := writeSectionHeaderBlock(b, opts)
 		assert.Nil(t, err)
 
 		expected := []byte{
@@ -37,6 +49,51 @@ func TestPCAPNG(t *testing.T) {
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 			0x1C, 0x00, 0x00, 0x00,
 		}
+		assert.EqualValues(t, expected, b.Bytes())
+	})
+
+	t.Run("Encodes interface description blocks", func(t *testing.T) {
+		b := bytes.NewBuffer(nil)
+
+		opts := types.InterfaceOptions{}
+		err := writeInterfaceDescriptionBlock(b, 1, opts)
+		assert.Nil(t, err)
+
+		expected := []byte{
+			0x01, 0x00, 0x00, 0x00,
+			0x14, 0x00, 0x00, 0x00,
+			0x01, 0x00,
+			0x00, 0x00,
+			0xFF, 0xFF, 0xFF, 0xFF,
+			0x14, 0x00, 0x00, 0x00,
+		}
+		assert.EqualValues(t, expected, b.Bytes())
+	})
+
+	t.Run("Encodes enhanced packet blocks", func(t *testing.T) {
+		b := bytes.NewBuffer(nil)
+
+		data := []byte{0xaa, 0xbb, 0xcc, 0xdd}
+		opts := types.EnhancedPacketOptions{}
+		now := time.Now()
+
+		err := writeEnhancedPacketBlock(b, 1, now, data, opts)
+		assert.Nil(t, err)
+
+		base := []byte{
+			0x06, 0x00, 0x00, 0x00,
+			0x24, 0x00, 0x00, 0x00,
+			0x01, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00,
+			0x00, 0x00, 0x00, 0x00,
+			0x04, 0x00, 0x00, 0x00,
+			0x04, 0x00, 0x00, 0x00,
+			0xaa, 0xbb, 0xcc, 0xdd,
+			0x24, 0x00, 0x00, 0x00,
+		}
+		expected := append(base[0:12], timeToSplitArr(now)...)
+		expected = append(expected, base[20:]...)
+
 		assert.EqualValues(t, expected, b.Bytes())
 	})
 

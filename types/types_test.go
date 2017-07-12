@@ -50,8 +50,13 @@ func TestTypes(t *testing.T) {
 	})
 
 	t.Run("Encodes and decodes SectionHeaders", func(t *testing.T) {
-		opts1 := Options{*NewCommentOption("Test Comment")}
-		sh1 := NewSectionHeader(opts1)
+		opts := SectionHeaderOptions{
+			Comment:     "Test Comment",
+			Hardware:    "Fake hardware",
+			OS:          "Not an os",
+			Application: "go-pcapng",
+		}
+		sh1 := NewSectionHeader(opts)
 		data, err := sh1.MarshalBinary()
 		assert.Nil(t, err)
 

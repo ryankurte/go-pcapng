@@ -8,7 +8,7 @@ import (
 
 const (
 	// BlockTypeEnhancedPacket is the type code for an interface description block
-	BlockTypeEnhancedPacket uint32 = 0x00000001
+	BlockTypeEnhancedPacket uint32 = 0x00000006
 )
 
 // Enhanced Packet block option codes

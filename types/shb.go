@@ -5,6 +5,13 @@ import (
 	"encoding/binary"
 )
 
+// SectionHeader option codes
+const (
+	OptionCodeSectionHeaderHardware    uint16 = 2
+	OptionCodeSectionHeaderOS          uint16 = 3
+	OptionCodeSectionHeaderApplication uint16 = 4
+)
+
 // SectionHeaderHeader is the static header component of a section header
 type SectionHeaderHeader struct {
 	Magic         uint32
@@ -19,8 +26,34 @@ type SectionHeader struct {
 	Options Options
 }
 
+// SectionHeaderOptions options that can be passed in the section header
+type SectionHeaderOptions struct {
+	Comment     string
+	Hardware    string
+	OS          string
+	Application string
+}
+
 // NewSectionHeader creates a section header with the provided options
-func NewSectionHeader(options Options) *SectionHeader {
+func NewSectionHeader(options SectionHeaderOptions) *SectionHeader {
+	opts := make([]Option, 0)
+
+	if options.Comment != "" {
+		opts = append(opts, *NewOption(OptionCodeComment, []byte(options.Comment)))
+	}
+
+	if options.Hardware != "" {
+		opts = append(opts, *NewOption(OptionCodeSectionHeaderHardware, []byte(options.Hardware)))
+	}
+
+	if options.OS != "" {
+		opts = append(opts, *NewOption(OptionCodeSectionHeaderOS, []byte(options.OS)))
+	}
+
+	if options.Application != "" {
+		opts = append(opts, *NewOption(OptionCodeSectionHeaderApplication, []byte(options.Application)))
+	}
+
 	return &SectionHeader{
 		SectionHeaderHeader: SectionHeaderHeader{
 			Magic:         Magic,
@@ -28,7 +61,7 @@ func NewSectionHeader(options Options) *SectionHeader {
 			VersionMinor:  MinorVersion,
 			SectionLength: SectionLengthDefault,
 		},
-		Options: options,
+		Options: opts,
 	}
 }
 
@@ -40,8 +73,6 @@ func (shb *SectionHeader) MarshalBinary() ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	shb.SectionLength = uint64(len(opts))
 
 	if err := binary.Write(buff, binary.LittleEndian, &shb.SectionHeaderHeader); err != nil {
 		return nil, err
@@ -62,7 +93,7 @@ func (shb *SectionHeader) UnmarshalBinary(d []byte) error {
 		return err
 	}
 
-	optd := make([]byte, uint(shb.SectionLength))
+	optd := make([]byte, buff.Len())
 	if _, err := buff.Read(optd); err != nil {
 		return err
 	}
