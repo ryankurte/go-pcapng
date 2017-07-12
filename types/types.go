@@ -1,6 +1,7 @@
 package types
 
 import (
+	"fmt"
 	"io"
 )
 
@@ -27,19 +28,24 @@ func readPacked(r io.Reader, length uint) ([]byte, error) {
 	return data[0:length], nil
 }
 
-type EnhancedPacketBlock struct {
-	InterfaceID    uint32
-	TimestampHigh  uint32
-	TimestampLow   uint32
-	CaptureLength  uint32
-	OriginalLength uint32
-	PacketData     []byte
-	//Options []Block
+func bytesToHexString(data []byte) string {
+	str := ""
+	for i, d := range data {
+		str += fmt.Sprintf("%.2x", d)
+		if i != len(data)-1 {
+			str += " "
+		}
+	}
+	return str
 }
 
-type InterfaceDescriptionBlock struct {
-	LinkType       uint16
-	Reserved       uint16
-	SnapshotLength uint32
-	//Options []Block
+func bytesToByteString(data []byte) string {
+	str := ""
+	for i, d := range data {
+		str += fmt.Sprintf("%d", d)
+		if i != len(data)-1 {
+			str += " "
+		}
+	}
+	return str
 }

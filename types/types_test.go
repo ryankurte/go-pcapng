@@ -1,9 +1,11 @@
 package types
 
 import (
-	"github.com/stretchr/testify/assert"
 	"net"
 	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestTypes(t *testing.T) {
@@ -106,6 +108,29 @@ func TestTypes(t *testing.T) {
 			assert.EqualValues(t, o, string(idb2.Options[i].Value), "Option %d error", i)
 		}
 
+	})
+
+	t.Run("Encodes and decodes EnhancedPackets", func(t *testing.T) {
+		opts := EnhancedPacketOptions{
+			OriginalLength: 32,
+			Comment:        "Fake comment",
+		}
+		epb1, err := NewEnhancedPacket(1, time.Now(), []byte{0xaa, 0xbb, 0xcc, 0xdd}, opts)
+		assert.Nil(t, err)
+
+		assert.EqualValues(t, 32, epb1.OriginalLength)
+		assert.EqualValues(t, 4, epb1.CaptureLength)
+		assert.EqualValues(t, []byte{0xaa, 0xbb, 0xcc, 0xdd}, epb1.PacketData)
+		assert.EqualValues(t, opts.Comment, string(epb1.Options[0].Value))
+
+		data, err := epb1.MarshalBinary()
+		assert.Nil(t, err)
+
+		epb2 := &EnhancedPacket{}
+		err = epb2.UnmarshalBinary(data)
+		assert.Nil(t, err)
+
+		assert.EqualValues(t, epb1, epb2)
 	})
 
 }

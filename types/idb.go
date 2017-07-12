@@ -60,28 +60,6 @@ type InterfaceOptions struct {
 	Speed       uint64
 }
 
-func bytesToHexString(data []byte) string {
-	str := ""
-	for i, d := range data {
-		str += fmt.Sprintf("%.2x", d)
-		if i != len(data)-1 {
-			str += " "
-		}
-	}
-	return str
-}
-
-func bytesToByteString(data []byte) string {
-	str := ""
-	for i, d := range data {
-		str += fmt.Sprintf("%d", d)
-		if i != len(data)-1 {
-			str += " "
-		}
-	}
-	return str
-}
-
 // NewInterfaceDescription creates an interface description with the provided options
 func NewInterfaceDescription(linkType uint16, options InterfaceOptions) (*InterfaceDescription, error) {
 	opts := Options{}

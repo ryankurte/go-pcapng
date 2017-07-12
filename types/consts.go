@@ -8,6 +8,5 @@ const (
 )
 
 const (
-	BlockTypeSectionHeader  uint32 = 0x0A0D0D0A
-	BlockTypeEnhancedPacket uint32 = 0x00000006
+	BlockTypeSectionHeader uint32 = 0x0A0D0D0A
 )
