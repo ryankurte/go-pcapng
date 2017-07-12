@@ -98,6 +98,8 @@ func TestPCAPNG(t *testing.T) {
 	})
 
 	t.Run("Creates valid pcap files", func(t *testing.T) {
+		now := time.Now()
+
 		pw, err := NewFileWriter("./test.pcapng")
 		assert.Nil(t, err)
 
@@ -105,13 +107,28 @@ func TestPCAPNG(t *testing.T) {
 			Comment:     "Test go-pcapng output file",
 			Application: "go-pcapng",
 		}
-		pw.WriteSectionHeader(so)
+		err = pw.WriteSectionHeader(so)
+		assert.Nil(t, err)
 
 		io := types.InterfaceOptions{
 			Name:        "Test interface",
 			Description: "Totally fake",
 		}
-		pw.WriteInterfaceDescription(types.LinkTypePrivate, io)
+		err = pw.WriteInterfaceDescription(types.LinkTypePrivate, io)
+		assert.Nil(t, err)
+
+		po := types.EnhancedPacketOptions{}
+
+		err = pw.WriteEnhancedPacketBlock(0, now, []byte{0x11, 0x22, 0x33}, po)
+		assert.Nil(t, err)
+
+		err = pw.WriteEnhancedPacketBlock(0, now.Add(1*time.Second), []byte{0xaa, 0xbb, 0xcc}, po)
+		assert.Nil(t, err)
+
+		err = pw.WriteEnhancedPacketBlock(0, now.Add(2*time.Second), []byte{0xca, 0xfe}, po)
+		assert.Nil(t, err)
+
+		pw.Close()
 
 	})
 

@@ -1,7 +1,6 @@
 package pcapng
 
 import (
-	"bufio"
 	"io"
 	"os"
 	"time"
@@ -12,7 +11,6 @@ import (
 // FileWriter is a PCAP-NG file writer
 type FileWriter struct {
 	f *os.File
-	w io.Writer
 }
 
 // NewFileWriter creates a new PCAP-NG file writing instanew
@@ -22,27 +20,31 @@ func NewFileWriter(fileName string) (*FileWriter, error) {
 	if err != nil {
 		return nil, err
 	}
-	w := bufio.NewWriter(f)
 
-	return &FileWriter{f: f, w: w}, nil
+	return &FileWriter{f: f}, nil
 }
 
 // WriteSectionHeader writes a pcap-ng section header
 // This is required at the start of a file, and optional to start new sections
 func (fw *FileWriter) WriteSectionHeader(options types.SectionHeaderOptions) error {
-	return writeSectionHeaderBlock(fw.w, options)
+	return writeSectionHeaderBlock(fw.f, options)
 }
 
 // WriteInterfaceDescription writes an interface description block
 // This creates an interface which should be referenced by order created in enhanced packets
 func (fw *FileWriter) WriteInterfaceDescription(linkType uint16, options types.InterfaceOptions) error {
-	return writeInterfaceDescriptionBlock(fw.w, linkType, options)
+	return writeInterfaceDescriptionBlock(fw.f, linkType, options)
 }
 
 // WriteEnhancedPacketBlock writes an enhanced packet block
 // InterfaceID must be the index of a previously created interface description
 func (fw *FileWriter) WriteEnhancedPacketBlock(interfaceID uint32, timestamp time.Time, data []byte, options types.EnhancedPacketOptions) error {
-	return writeEnhancedPacketBlock(fw.w, interfaceID, timestamp, data, options)
+	return writeEnhancedPacketBlock(fw.f, interfaceID, timestamp, data, options)
+}
+
+// Close closes the file writer
+func (fw *FileWriter) Close() {
+	fw.f.Close()
 }
 
 func writeSectionHeaderBlock(w io.Writer, options types.SectionHeaderOptions) error {
