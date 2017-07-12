@@ -1,6 +1,8 @@
 # go-pcapng
 
-PCAP-NG reading and writing implementation in golang.
+PCAP-NG **writing** and *reading* implementation in golang. Because for reasons that will remain unknown I need packet capture outputs from golang apps.
+
+See [pcapng/pcapng](https://github.com/pcapng/pcapng) for file format specifications.
 
 ## Status
 
